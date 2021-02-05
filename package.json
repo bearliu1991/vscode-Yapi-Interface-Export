@@ -1,0 +1,52 @@
+{
+    "name": "yapiinterfaceexport",
+    "displayName": "Yapi Interface Export To Js",
+    "description": "Yapi Interface Export To Js",
+    "publisher": "bearliu1991",
+    "version": "1.0.3",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.yapiinterfaceexport"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.yapiinterfaceexport",
+                "title": "Yapi Interface Export"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "command": "extension.yapiinterfaceexport",
+                    "group": "1_modification"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "pretest": "yarn run lint",
+        "test": "node ./test/runTest.js"
+    },
+    "devDependencies": {
+        "@types/glob": "^7.1.3",
+        "@types/mocha": "^8.0.4",
+        "@types/node": "^12.11.7",
+        "@types/vscode": "^1.52.0",
+        "eslint": "^7.19.0",
+        "glob": "^7.1.6",
+        "mocha": "^8.2.1",
+        "typescript": "^4.1.3",
+        "vscode-test": "^1.5.0"
+    },
+    "dependencies": {
+        "superagent": "^6.1.0"
+    }
+}
