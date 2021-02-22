@@ -247,7 +247,13 @@ module.exports = function createFile(createFilePath, config) {
   }
   // 写入js
   function createJS() {
-    const filePath = `${createFilePath}/${config.jsName}.js`;
+    // 判断apiModule文件夹是否存在
+    const apiModuleDir = `${createFilePath}/apiModule`;
+    if (!fs.existsSync(apiModuleDir)) {
+      fs.mkdirSync(`${createFilePath}/apiModule`);
+    }
+    const moduleAdrress = (_basePath || "/apiDefault").split("/")[1];
+    const filePath = `${createFilePath}/apiModule/${moduleAdrress}.js`;
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
         console.error(err);
