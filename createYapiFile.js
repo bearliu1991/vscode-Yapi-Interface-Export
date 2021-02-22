@@ -1,15 +1,13 @@
+const { resolve } = require("path");
 const vscode = require("vscode");
 //SuperAgent是一个轻量级、灵活的、易读的、低学习曲线的客户端请求代理模块，使用在NodeJS环境中。
 module.exports = function createFile(createFilePath, config) {
-  // let config = require("./config.js");
   let superagent = require("superagent");
   const fs = require("fs");
-  let _basePath = "";
   const startStr = "/*";
   const endStr = "\n */\n";
   let resList = [];
   let token = "";
-  let sumStr = "";
   const loginUrl = "http://yapi.kapeixi.cn/api/user/login";
 
   function get(url) {
@@ -72,14 +70,37 @@ module.exports = function createFile(createFilePath, config) {
       getAllData(item);
     });
   });
-
-  function getAllData(item) {
-    // 获取basePath
-    get(`http://yapi.kapeixi.cn/api/project/get?id=${item}`).then((res) => {
-      if (res.errcode === 0) {
-        _basePath = res.data.basepath;
-      }
+  function getBasePath(item) {
+    return new Promise((resolve) => {
+      get(`http://yapi.kapeixi.cn/api/project/get?id=${item}`).then((res) => {
+        if (res.errcode === 0) {
+          resolve(res.data.basepath);
+        }
+      });
     });
+  }
+  function getProjectList(item) {
+    return new Promise((resolve) => {
+      get(
+        `http://yapi.kapeixi.cn/api/interface/list?page=1&limit=20&project_id=${item}`
+      ).then((res) => {
+        if (res.errcode === 0) {
+          resolve(res.data.list);
+        }
+      });
+    });
+  }
+  async function getAllData(item) {
+    resList = [];
+    // 获取basePath
+    const _basePath = await getBasePath(item);
+    listHandler(await getProjectList(item), _basePath);
+
+    // get(`http://yapi.kapeixi.cn/api/project/get?id=${item}`).then((res) => {
+    //   if (res.errcode === 0) {
+    //     _basePath = res.data.basepath;
+    //   }
+    // });
     // if (config.catId) {
     //   get(
     //     `http://yapi.kapeixi.cn/api/interface/list_cat?page=1&limit=20&catid=${config.catId}`
@@ -89,26 +110,28 @@ module.exports = function createFile(createFilePath, config) {
     //     }
     //   });
     // } else {
-    get(
-      `http://yapi.kapeixi.cn/api/interface/list?page=1&limit=20&project_id=${item}`
-    ).then((res) => {
-      if (res.errcode === 0) {
-        listHandler(res.data.list);
-      }
-    });
+    // get(
+    //   `http://yapi.kapeixi.cn/api/interface/list?page=1&limit=20&project_id=${item}`
+    // ).then((res) => {
+    //   if (res.errcode === 0) {
+    //     listHandler(res.data.list);
+    //   }
+    // });
     // }
   }
 
-  function listHandler(list) {
+  function listHandler(list, _basePath) {
     list.forEach((item) => {
       resList.push(getAllInterface(item._id));
     });
     try {
       Promise.all(resList).then((res) => {
-        res.forEach((item, index) => {
-          installData(item, index);
+        let sumStr = "";
+        res.forEach((item) => {
+          const a = installData(item, _basePath);
+          sumStr += a;
         });
-        createJS();
+        createJS(_basePath, sumStr);
       });
     } catch (err) {
       vscode.window.showErrorMessage(err);
@@ -125,7 +148,7 @@ module.exports = function createFile(createFilePath, config) {
     });
   }
 
-  function installData(itemData) {
+  function installData(itemData, _basePath) {
     let totalStr =
       startStr +
       " " +
@@ -206,7 +229,7 @@ module.exports = function createFile(createFilePath, config) {
       .replace("[InterfaceApi]", _basePath + itemData.path)
       .replace("interfaceDefineMethods", "api." + interfaceModuleName);
     //   .replace("[interfaceDefineMethods]", _basePath + itemData.path);
-    sumStr += totalStr + "\n\n";
+    return totalStr + "\n\n";
   }
   function handelIterator(originData) {
     let parentStr = "";
@@ -246,7 +269,7 @@ module.exports = function createFile(createFilePath, config) {
     return originStr;
   }
   // 写入js
-  function createJS() {
+  function createJS(_basePath, sumStr) {
     // 判断apiModule文件夹是否存在
     const apiModuleDir = `${createFilePath}/apiModule`;
     if (!fs.existsSync(apiModuleDir)) {
