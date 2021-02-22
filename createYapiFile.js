@@ -277,15 +277,18 @@ module.exports = function createFile(createFilePath, config) {
     }
     const moduleAdrress = (_basePath || "/apiDefault").split("/")[1];
     const filePath = `${createFilePath}/apiModule/${moduleAdrress}.js`;
+    const content =
+      "import api from '../api' \nimport axios from '../axios' \n\n" + sumStr;
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
         console.error(err);
       });
-      fs.writeFile(filePath, sumStr, (err) => {
+
+      fs.writeFile(filePath, content, (err) => {
         console.error(err);
       });
     } else {
-      fs.writeFile(filePath, sumStr, (err) => {
+      fs.writeFile(filePath, content, (err) => {
         console.error(err);
       });
     }
