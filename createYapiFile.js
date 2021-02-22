@@ -4,9 +4,9 @@ module.exports = function createFile(createFilePath, config) {
   // let config = require("./config.js");
   let superagent = require("superagent");
   const fs = require("fs");
-  let basePath = "";
+  let _basePath = "";
   const startStr = "/*";
-  const endStr = "\n */";
+  const endStr = "\n */\n";
   let resList = [];
   let token = "";
   let sumStr = "";
@@ -65,35 +65,38 @@ module.exports = function createFile(createFilePath, config) {
     });
   }
   post().then(() => {
-    getAllData();
+    if (!config.projectId || !config.projectId.length) {
+      vscode.window.showErrorMessage("至少输入一个projectId");
+    }
+    config.projectId.forEach((item) => {
+      getAllData(item);
+    });
   });
 
-  function getAllData() {
+  function getAllData(item) {
     // 获取basePath
-    get(`http://yapi.kapeixi.cn/api/project/get?id=${config.projectId}`).then(
-      (res) => {
-        if (res.errcode === 0) {
-          basePath = res.data.basepath;
-        }
+    get(`http://yapi.kapeixi.cn/api/project/get?id=${item}`).then((res) => {
+      if (res.errcode === 0) {
+        _basePath = res.data.basepath;
       }
-    );
-    if (config.catId) {
-      get(
-        `http://yapi.kapeixi.cn/api/interface/list_cat?page=1&limit=20&catid=${config.catId}`
-      ).then((res) => {
-        if (res.errcode === 0) {
-          listHandler(res.data.list);
-        }
-      });
-    } else {
-      get(
-        `http://yapi.kapeixi.cn/api/interface/list?page=1&limit=20&project_id=${config.projectId}`
-      ).then((res) => {
-        if (res.errcode === 0) {
-          listHandler(res.data.list);
-        }
-      });
-    }
+    });
+    // if (config.catId) {
+    //   get(
+    //     `http://yapi.kapeixi.cn/api/interface/list_cat?page=1&limit=20&catid=${config.catId}`
+    //   ).then((res) => {
+    //     if (res.errcode === 0) {
+    //       listHandler(res.data.list);
+    //     }
+    //   });
+    // } else {
+    get(
+      `http://yapi.kapeixi.cn/api/interface/list?page=1&limit=20&project_id=${item}`
+    ).then((res) => {
+      if (res.errcode === 0) {
+        listHandler(res.data.list);
+      }
+    });
+    // }
   }
 
   function listHandler(list) {
@@ -102,8 +105,8 @@ module.exports = function createFile(createFilePath, config) {
     });
     try {
       Promise.all(resList).then((res) => {
-        res.forEach((item) => {
-          installData(item);
+        res.forEach((item, index) => {
+          installData(item, index);
         });
         createJS();
       });
@@ -129,11 +132,11 @@ module.exports = function createFile(createFilePath, config) {
       itemData.title +
       "\n *" +
       " basePath:" +
-      basePath +
+      _basePath +
       itemData.path;
-    let headerStr = "\n * Heads:";
-    let paramsStr = "\n * Params:\n";
-    let responseStr = "\n * Response:";
+    let headerStr = config.isShowHeader ? "\n * Heads:" : "";
+    let paramsStr = config.isShowParams ? "\n * Params:\n" : "";
+    let responseStr = config.isShowResponse ? "\n * Response:" : "";
     if (config.isShowHeader) {
       let header = itemData.req_headers[0];
       if (header) {
@@ -180,6 +183,29 @@ module.exports = function createFile(createFilePath, config) {
       }
     }
     totalStr += responseStr + endStr;
+    let interfaceModuleName = "";
+    let interfaceUpcase = "";
+    // 组装接口名称
+    if (_basePath) {
+      const arr = _basePath.split("/");
+      interfaceModuleName = arr.length ? arr[1] || "" : "";
+      const arr1 = itemData.path.split("/");
+      const tempName = arr1.length ? arr1[arr1.length - 1] || "" : "";
+      interfaceUpcase = tempName[0].toUpperCase() + tempName.slice(1);
+    } else {
+      const arr = itemData.path.split("/");
+      interfaceModuleName = arr[1];
+      const tempName = arr.length ? arr[arr.length - 1] || "" : "";
+      interfaceUpcase = tempName[0].toUpperCase() + tempName.slice(1);
+    }
+
+    totalStr += config.jsContent
+      .replace("[interfaceDescription]", itemData.title)
+      .replace("[interfaceName]", interfaceModuleName + interfaceUpcase)
+      .replace("[interfaceMethods]", itemData.method.toLowerCase())
+      .replace("[InterfaceApi]", _basePath + itemData.path)
+      .replace("interfaceDefineMethods", "api." + interfaceModuleName);
+    //   .replace("[interfaceDefineMethods]", _basePath + itemData.path);
     sumStr += totalStr + "\n\n";
   }
   function handelIterator(originData) {

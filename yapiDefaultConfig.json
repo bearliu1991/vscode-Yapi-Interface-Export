@@ -1,10 +1,11 @@
 {
-  "email": "",
+  "email": "le.liu@kapeixi.com",
   "password": "",
-  "jsName": "yapiJs", 
-  "projectId": "", 
+  "jsName": "productModule", 
+  "projectId": "109", 
   "catId": "",
   "isShowHeader": "1", 
   "isShowParams": "1", 
-  "isShowResponse": "1"
+  "isShowResponse": "1",
+  "jsContent": "export function [interfaceName](map) {\n  // [interfaceDescription]\n  return axios.[interfaceMethods](`${interfaceDefineMethods}[InterfaceApi]`, map).then(response => response.data)\n}"
 }
