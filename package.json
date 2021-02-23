@@ -3,7 +3,7 @@
     "displayName": "Yapi Interface Export To Js",
     "description": "Yapi Interface Export To Js",
     "publisher": "bearliu1991",
-    "version": "1.0.5",
+    "version": "2.2.0",
     "engines": {
         "vscode": "^1.52.0"
     },

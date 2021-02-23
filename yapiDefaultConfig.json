@@ -1,10 +1,10 @@
 {
-  "email": "le.liu@kapeixi.com",
-  "password": "",
-  "jsName": "productModule", 
-  "projectId": [], 
-  "isShowHeader": "1", 
-  "isShowParams": "1", 
-  "isShowResponse": "1",
-  "jsContent": "export function [interfaceName](map) {\n  // [interfaceDescription]\n  return axios.[interfaceMethods](`${interfaceDefineMethods}[InterfaceApi]`, map).then(response => response.data)\n}"
-}
+    "email": "le.liu@kapeixi.com",
+    "password": "",
+    "projectId": [],
+    "isShowHeader": "",
+    "isShowParams": "1",
+    "isShowResponse": "1",
+    "jsContent": "export function [interfaceName](map) {\n  // [interfaceDescription]\n  return [interfaceMethods](`${[InterfaceHost]}[InterfacePath]`, map).then(response => response.data)\n}"
+  }
+  

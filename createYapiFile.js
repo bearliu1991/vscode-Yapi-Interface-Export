@@ -28,6 +28,7 @@ module.exports = function createFile(createFilePath, config) {
             if (res.body.errcode === 0) {
               resolve(res.body);
             } else if (res.body.errcode === 40011) {
+              vscode.window.showErrorMessage(url + ":" + res.body.errmsg);
             } else {
               vscode.window.showErrorMessage(res.body.errmsg);
             }
@@ -157,9 +158,9 @@ module.exports = function createFile(createFilePath, config) {
       " basePath:" +
       _basePath +
       itemData.path;
-    let headerStr = config.isShowHeader ? "\n * Heads:" : "";
-    let paramsStr = config.isShowParams ? "\n * Params:\n" : "";
-    let responseStr = config.isShowResponse ? "\n * Response:" : "";
+    let headerStr = config.isShowHeader ? "\n * @Heads:" : "";
+    let paramsStr = config.isShowParams ? "\n * @Params:\n" : "";
+    let responseStr = config.isShowResponse ? "\n * @Response:" : "";
     if (config.isShowHeader) {
       let header = itemData.req_headers[0];
       if (header) {
@@ -221,13 +222,23 @@ module.exports = function createFile(createFilePath, config) {
       const tempName = arr.length ? arr[arr.length - 1] || "" : "";
       interfaceUpcase = tempName[0].toUpperCase() + tempName.slice(1);
     }
-
+    let requestMethod = "";
+    if (
+      itemData.method.toLowerCase() === "post" ||
+      itemData.method.toLowerCase() === "get"
+    ) {
+      requestMethod =
+        itemData.method.toLowerCase() === "post" ? "postRequest" : "getRequest";
+    }
     totalStr += config.jsContent
       .replace("[interfaceDescription]", itemData.title)
       .replace("[interfaceName]", interfaceModuleName + interfaceUpcase)
-      .replace("[interfaceMethods]", itemData.method.toLowerCase())
-      .replace("[InterfaceApi]", _basePath + itemData.path)
-      .replace("interfaceDefineMethods", "api." + interfaceModuleName);
+      .replace("[interfaceMethods]", requestMethod)
+      .replace(
+        "[InterfaceHost]",
+        "process.env.VUE_APP_" + interfaceModuleName.toUpperCase()
+      )
+      .replace("[InterfacePath]", itemData.path);
     //   .replace("[interfaceDefineMethods]", _basePath + itemData.path);
     return totalStr + "\n\n";
   }
@@ -270,15 +281,15 @@ module.exports = function createFile(createFilePath, config) {
   }
   // 写入js
   function createJS(_basePath, sumStr) {
-    // 判断apiModule文件夹是否存在
-    const apiModuleDir = `${createFilePath}/apiModule`;
-    if (!fs.existsSync(apiModuleDir)) {
-      fs.mkdirSync(`${createFilePath}/apiModule`);
+    // 判断modules文件夹是否存在
+    const modulesDir = `${createFilePath}/modules`;
+    if (!fs.existsSync(modulesDir)) {
+      fs.mkdirSync(`${createFilePath}/modules`);
     }
     const moduleAdrress = (_basePath || "/apiDefault").split("/")[1];
-    const filePath = `${createFilePath}/apiModule/${moduleAdrress}.js`;
+    const filePath = `${createFilePath}/modules/${moduleAdrress}.js`;
     const content =
-      "import api from '../api' \nimport axios from '../axios' \n\n" + sumStr;
+      "import { postRequest, getRequest } from 'cupshe-axios' \n\n" + sumStr;
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
         console.error(err);
